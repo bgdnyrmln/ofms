@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags nav_tags %}
+{% block body_class %}is-product{% endblock %}
+{% block content %}
+<article class="product">
+  <div class="product__media">
+    <div class="product__gallery" data-gallery>
+      {% for item in page.images.all %}
+        <div class="product__slide">
+          {% image item.image width-1200 class="product__img" alt=item.caption|default:page.title %}
+        </div>
+      {% empty %}
+        <div class="product__slide"><div class="product__noimg"></div></div>
+      {% endfor %}
+    </div>
+    {% if page.images.all|length > 1 %}
+      <p class="product__count" data-count aria-hidden="true"><span>1</span>&nbsp;/&nbsp;{{ page.images.all|length }}</p>
+    {% endif %}
+  </div>
+
+  <div class="product__info">
+    <h1>{{ page.title }}</h1>
+    <p class="product__price">{{ page.price|rub }}</p>
+    {% if page.short_description %}<p class="product__short">{{ page.short_description }}</p>{% endif %}
+    {% if page.description %}<div class="prose">{{ page.description|richtext }}</div>{% endif %}
+    {% if page.details %}
+      <details class="fold"><summary>Материалы и уход</summary><div class="prose">{{ page.details|richtext }}</div></details>
+    {% endif %}
+
+    <section id="order" class="order" aria-labelledby="order-h">
+      {% if ordered %}
+        <h2 id="order-h">Заявка отправлена</h2>
+        <p>Мы напишем вам в течение суток, чтобы уточнить детали и оплату.</p>
+      {% elif page.is_available %}
+        <h2 id="order-h">Заказать</h2>
+        <form method="post" action="#order" novalidate>
+          {% csrf_token %}
+          {% for field in form.visible_fields %}
+            <div class="field{% if field.name == 'website' %} field--hp{% endif %}">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% for e in field.errors %}<p class="field__err">{{ e }}</p>{% endfor %}
+            </div>
+          {% endfor %}
+          <button type="submit">Отправить заявку</button>
+        </form>
+      {% else %}
+        <h2 id="order-h">Нет в наличии</h2>
+        <p>Этой модели сейчас нельзя заказать.</p>
+      {% endif %}
+    </section>
+  </div>
+</article>
+{% endblock %}
+
+{% block after_content %}
+{% if page.is_available and not ordered %}
+<div class="buybar">
+  <span class="buybar__price">{{ page.price|rub }}</span>
+  <a class="buybar__btn" href="#order">Заказать</a>
+</div>
+{% endif %}
+{% endblock %}

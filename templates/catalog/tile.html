@@ -1,0 +1,8 @@
+{% load wagtailimages_tags nav_tags %}
+<a class="tile{% if not product.is_available %} tile--sold{% endif %}" href="{{ product.url }}">
+  <span class="tile__media">
+    {% if product.main_image %}{% image product.main_image fill-640x800 class="tile__img" loading="lazy" %}{% endif %}
+  </span>
+  <span class="tile__title">{{ product.title }}</span>
+  <span class="tile__price">{% if product.is_available %}{{ product.price|rub }}{% else %}Нет в наличии{% endif %}</span>
+</a>

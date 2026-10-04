@@ -1,0 +1,51 @@
+# Сайт бренда на Wagtail
+
+Витрина + каталог. Заявки сохраняются в админке (раздел «Заявки») и,
+когда настроен бот, приходят в Telegram.
+
+## Запуск
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py seed_site --demo     # дерево страниц + 4 демо-товара (без --demo — только страницы)
+python manage.py createsuperuser
+python manage.py runserver
+```
+
+Сайт: http://localhost:8000 · Админка: http://localhost:8000/admin/
+
+## Что настроить в админке
+1. **Настройки → Site settings**: название бренда (это же большая надпись на главной), контакты, подвал.
+2. **Главная страница**: заголовок, подзаголовок и главное фото кампании.
+3. **Каталог → добавить дочернюю страницу «Товар»**: цена, размеры через запятую, фото (первое — обложка), галочка «Показывать на главной».
+4. **Страницы «О бренде» и «Контакты»**: блоки заголовок / текст / фото.
+
+## Telegram-бот для заявок
+1. Создайте бота у @BotFather, получите токен.
+2. Напишите боту любое сообщение, откройте
+   `https://api.telegram.org/bot<TOKEN>/getUpdates` и найдите `chat.id`
+   (можно использовать id группы, если добавить туда бота).
+3. Задайте переменные окружения:
+   `TELEGRAM_BOT_TOKEN=...` и `TELEGRAM_CHAT_ID=...`
+
+Вся логика в `orders/notifications.py`. Позже сюда можно добавить кнопки
+«Связались / Оплачено» (webhook) — статус заявки уже есть в модели.
+
+## Оплата
+Сейчас оплаты на сайте нет: клиент оставляет заявку, вы связываетесь и
+договариваетесь об оплате. Когда будете готовы — для РФ обычно берут
+ЮKassa, Т-Банк Касса или CloudPayments; их можно подключить к модели `Order`
+отдельным шагом.
+
+## Продакшен
+```
+DEBUG=0  SECRET_KEY=<длинная строка>  ALLOWED_HOSTS=example.ru
+CSRF_TRUSTED_ORIGINS=https://example.ru  BASE_URL=https://example.ru
+python manage.py collectstatic --noinput
+gunicorn brand.wsgi
+```
+Шрифты (Unbounded, Golos Text) подключены с Google Fonts. Для надёжности
+для аудитории в РФ лучше скачать их и положить в `static/`.
+Если название бренда длинное, уменьшите `min(17vw, 15rem)` в `.hero__mark` (`static/css/site.css`).

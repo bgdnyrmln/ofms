@@ -1,0 +1,68 @@
+{% load static wagtailcore_tags wagtailuserbar nav_tags %}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#e4e4e1">
+  <title>{% block title %}{% firstof page.seo_title page.title %}{% endblock %} — {{ settings.core.SiteSettings.brand_name }}</title>
+  {% if page.search_description %}<meta name="description" content="{{ page.search_description }}">{% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500&family=Unbounded:wght@400;500&display=swap&subset=cyrillic">
+  <link rel="stylesheet" href="{% asset 'css/site.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip" href="#main">К содержимому</a>
+  {% main_menu as menu_items %}
+  <header class="top">
+    <a class="top__brand" href="/">{{ settings.core.SiteSettings.brand_name }}</a>
+    <nav class="top__nav" aria-label="Основное меню">
+      {% for item in menu_items %}
+        <a href="{% pageurl item %}"{% if item.url in request.path %} aria-current="page"{% endif %}>{{ item.title }}</a>
+      {% endfor %}
+    </nav>
+    <button class="top__burger" type="button" aria-expanded="false" aria-controls="menu">Меню</button>
+  </header>
+
+  <div class="drawer" id="menu">
+    <div class="drawer__head">
+      <span class="drawer__brand">{{ settings.core.SiteSettings.brand_name }}</span>
+      <button class="drawer__close" type="button">Закрыть</button>
+    </div>
+    <nav class="drawer__nav" aria-label="Меню">
+      <a href="/"{% if request.path == "/" %} aria-current="page"{% endif %}>Главная</a>
+      {% for item in menu_items %}
+        <a href="{% pageurl item %}"{% if item.url in request.path %} aria-current="page"{% endif %}>{{ item.title }}</a>
+      {% endfor %}
+    </nav>
+    {% with s=settings.core.SiteSettings %}
+      {% if s.telegram or s.instagram or s.email %}
+      <div class="drawer__meta">
+        {% if s.telegram %}<a href="https://t.me/{{ s.telegram }}">Telegram</a>{% endif %}
+        {% if s.instagram %}<a href="https://instagram.com/{{ s.instagram }}">Instagram</a>{% endif %}
+        {% if s.email %}<a href="mailto:{{ s.email }}">{{ s.email }}</a>{% endif %}
+      </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <main id="main">{% block content %}{% endblock %}</main>
+  <footer class="foot">
+  {% with s=settings.core.SiteSettings %}
+    <p class="foot__note">{% if s.footer_note %}{{ s.footer_note }}{% else %}© {% now "Y" %} {{ s.brand_name }}{% endif %}</p>
+    {% if s.telegram or s.instagram or s.email %}
+    <p class="foot__links">
+      {% if s.telegram %}<a href="https://t.me/{{ s.telegram }}">Telegram</a>{% endif %}
+      {% if s.instagram %}<a href="https://instagram.com/{{ s.instagram }}">Instagram</a>{% endif %}
+      {% if s.email %}<a href="mailto:{{ s.email }}">{{ s.email }}</a>{% endif %}
+    </p>
+    {% endif %}
+  {% endwith %}
+  </footer>
+  {% block after_content %}{% endblock %}
+  <script src="{% asset 'js/site.js' %}" defer></script>
+  {% wagtailuserbar %}
+</body>
+</html>
