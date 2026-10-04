@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% load nav_tags %}
 {% block content %}
 <section class="page-head">
+  <p class="lbl page-head__eyebrow">{{ products|length|ru_plural:"товар,товара,товаров" }}</p>
   <h1>{{ page.title }}</h1>
-  {% if page.intro %}<p>{{ page.intro }}</p>{% endif %}
+  {% if page.intro %}<p class="page-head__intro">{{ page.intro }}</p>{% endif %}
   {% if categories %}
   <nav class="filters" aria-label="Категории">
     <a href="{{ page.url }}"{% if not active_category %} aria-current="true"{% endif %}>Все</a>
@@ -12,8 +14,10 @@
   </nav>
   {% endif %}
 </section>
-<section class="grid">
-  {% for product in products %}{% include "catalog/tile.html" %}
-  {% empty %}<p class="empty">Здесь пока ничего нет. Загляните позже.</p>{% endfor %}
+<section class="shelf">
+  <div class="grid">
+    {% for product in products %}{% include "catalog/tile.html" %}
+    {% empty %}<p class="empty">Здесь пока ничего нет. Загляните позже.</p>{% endfor %}
+  </div>
 </section>
 {% endblock %}

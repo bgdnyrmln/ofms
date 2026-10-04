@@ -10,7 +10,7 @@ class OrderViewSet(SnippetViewSet):
     menu_label = "Заявки"
     menu_order = 200
     add_to_admin_menu = True
-    list_display = ["created_at", "product_title", "size", "name", "contact", "status"]
+    list_display = ["created_at", "product_title", "price", "name", "contact", "status"]
     list_filter = ["status"]
     search_fields = ["name", "contact", "product_title"]
 

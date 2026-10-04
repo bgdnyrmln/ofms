@@ -1,22 +1,32 @@
 {% extends "base.html" %}
-{% load wagtailimages_tags %}
+{% load wagtailcore_tags wagtailimages_tags nav_tags %}
 {% block body_class %}is-home{% endblock %}
 {% block content %}
 <section class="hero">
-  {% if page.hero_image %}
-    {% image page.hero_image fill-1800x1200 class="hero__img" %}
-  {% endif %}
+  <canvas class="hero__gl" aria-hidden="true"></canvas>
+  <h1 class="sr-only">{{ settings.core.SiteSettings.brand_name }}</h1>
+  {% if catalog %}<a class="btn btn--ghost hero__cta" href="{% pageurl catalog %}">Войти в каталог <span class="btn__line" aria-hidden="true"></span></a>{% endif %}
 </section>
 
-<section class="lede">
-  <p class="lede__title">{{ page.hero_title }}</p>
-  <p class="lede__sub">{{ page.hero_subtitle|default:settings.core.SiteSettings.tagline }}</p>
-</section>
+{% if marquee_items %}
+<div class="ticker" aria-label="{{ marquee_items|join:', ' }}">
+  <div class="ticker__track" aria-hidden="true">
+    {% for _ in "12" %}<div class="ticker__set">{% for m in marquee_items %}<span class="ticker__item">{{ m }}</span>{% endfor %}</div>{% endfor %}
+  </div>
+</div>
+{% endif %}
 
 {% if featured %}
-<section class="grid" aria-label="Избранное">
-  {% for product in featured %}{% include "catalog/tile.html" %}{% endfor %}
+<section class="shelf" aria-label="Товары">
+  <div class="shelf__head lbl">
+    <span>{{ featured|length|ru_plural:"товар,товара,товаров" }}</span>
+    {% if catalog %}<a href="{% pageurl catalog %}">Весь каталог →</a>{% endif %}
+  </div>
+  <div class="grid">
+    {% for product in featured %}{% include "catalog/tile.html" %}{% endfor %}
+  </div>
 </section>
-{% if catalog %}<p class="more"><a href="{{ catalog.url }}">Весь каталог</a></p>{% endif %}
 {% endif %}
 {% endblock %}
+
+{% block after_content %}<script src="{% asset 'js/liquid.js' %}" defer></script>{% endblock %}

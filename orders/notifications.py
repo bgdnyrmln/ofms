@@ -17,13 +17,24 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
+def _rub(value):
+    return f"{value:,}".replace(",", " ") + " ₽"
+
+
 def format_order(order):
-    lines = [
-        f"<b>Новая заявка #{order.pk}</b>",
-        f"{escape(order.product_title)} — {order.price:,} ₽".replace(",", " "),
-    ]
-    if order.size:
-        lines.append(f"Размер: {escape(order.size)}")
+    lines = [f"<b>Новая заявка #{order.pk}</b>", ""]
+    items = list(order.items.all()) if order.pk else []
+    if items:
+        for item in items:
+            size = f", {escape(item.size)}" if item.size else ""
+            qty = f" ×{item.quantity}" if item.quantity > 1 else ""
+            lines.append(f"• {escape(item.title)}{size}{qty} — {_rub(item.line_total)}")
+        lines.append(f"<b>Итого: {_rub(order.price)}</b>")
+    else:
+        lines.append(f"{escape(order.product_title)} — {_rub(order.price)}")
+        if order.size:
+            lines.append(f"Размер: {escape(order.size)}")
+    lines.append("")
     lines.append(f"Имя: {escape(order.name)}")
     lines.append(f"Контакт: {escape(order.contact)}")
     if order.comment:

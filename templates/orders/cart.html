@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags nav_tags %}
+{% block title %}Корзина{% endblock %}
+{% block body_class %}is-cart{% endblock %}
+{% block content %}
+<div class="wrap wrap--cart">
+<section class="page-head">
+  <p class="lbl page-head__eyebrow">{% if lines %}{{ cart_count|ru_plural:"вещь,вещи,вещей" }}{% else %}Пусто{% endif %}</p>
+  <h1>Корзина</h1>
+</section>
+
+{% if lines %}
+<div class="cart">
+  <ul class="cart__lines">
+    {% for line in lines %}
+    <li class="line">
+      <a class="line__media" href="{{ line.product.url }}">
+        {% if line.product.main_image %}{% image line.product.main_image fill-240x320 class="line__img" alt="" %}{% endif %}
+      </a>
+      <div class="line__body">
+        <div class="line__top">
+          <a class="line__title" href="{{ line.product.url }}">{{ line.product.title }}</a>
+          <span class="line__price">{{ line.total|rub }}</span>
+        </div>
+        <p class="line__meta lbl">{% if line.size %}Размер {{ line.size }} · {% endif %}{{ line.product.price|rub }}</p>
+        <form class="line__ctrl" method="post" action="{% url 'cart_update' %}">
+          {% csrf_token %}
+          <input type="hidden" name="key" value="{{ line.key }}">
+          <div class="qty">
+            <button type="submit" name="qty" value="{{ line.quantity|add:-1 }}" aria-label="Меньше">−</button>
+            <span aria-label="Количество">{{ line.quantity }}</span>
+            <button type="submit" name="qty" value="{{ line.quantity|add:1 }}" aria-label="Больше">+</button>
+          </div>
+          <button class="line__remove lbl" type="submit" name="remove" value="1">Удалить</button>
+        </form>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <aside class="checkout">
+    <div class="checkout__total"><span class="lbl">Итого</span><span>{{ total|rub }}</span></div>
+    <p class="checkout__note">Оплаты на сайте нет. После заявки менеджер напишет вам, подтвердит наличие и согласует оплату и доставку.</p>
+    {% page_by_slug "rules" as rules %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% for field in form.visible_fields %}
+        {% if field.name == "agree" %}
+          <label class="check">
+            {{ field }}
+            <span>Согласен с {% if rules %}<a href="{% pageurl rules %}" target="_blank">правилами магазина</a>{% else %}правилами магазина{% endif %}</span>
+          </label>
+          {% for e in field.errors %}<p class="field__err">{{ e }}</p>{% endfor %}
+        {% else %}
+          <div class="field{% if field.name == 'website' %} field--hp{% endif %}">
+            <label for="{{ field.id_for_label }}" class="lbl">{{ field.label }}</label>
+            {{ field }}
+            {% for e in field.errors %}<p class="field__err">{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+      <button class="btn" type="submit">Оформить заявку</button>
+    </form>
+  </aside>
+</div>
+{% else %}
+<div class="cart-empty">
+  <p>В корзине пока ничего нет.</p>
+  {% catalog_page as catalog %}
+  {% if catalog %}<a class="btn btn--ghost" href="{% pageurl catalog %}">Войти в каталог <span class="btn__line" aria-hidden="true"></span></a>{% endif %}
+</div>
+{% endif %}
+</div>
+{% endblock %}

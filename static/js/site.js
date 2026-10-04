@@ -1,13 +1,12 @@
-/* Mobile behaviour only. Everything degrades to a working page without it. */
+/* Progressive enhancement only. Everything degrades to a working page without it. */
 (function () {
   "use strict";
 
   console.log("bgdnyrmln.com");
 
-  /* --- menu drawer ------------------------------------------------------ */
+  /* --- menu drawer (phones) --------------------------------------------- */
   var burger = document.querySelector(".top__burger");
   var drawer = document.getElementById("menu");
-
   if (burger && drawer) {
     var setOpen = function (open) {
       document.body.classList.toggle("nav-open", open);
@@ -21,7 +20,6 @@
         burger.focus();
       }
     };
-
     drawer.setAttribute("inert", "");
     burger.addEventListener("click", function () {
       setOpen(!document.body.classList.contains("nav-open"));
@@ -38,38 +36,43 @@
     });
   }
 
-  /* --- wordmark never clips, whatever the brand name is ----------------- */
-  var mark = document.querySelector(".hero__mark");
-  if (mark) {
-    /* Unbounded is wide: a long brand name would clip against nowrap.
-       Shrink to fit, iterating because letter-spacing and the webfont swap
-       make the first proportional guess only approximate. */
-    var fitMark = function () {
-      mark.style.fontSize = "";
-      var cs = getComputedStyle(mark);
-      var pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
-      var avail = mark.clientWidth - pad;
-      if (!(avail > 0)) return;
-      var size = parseFloat(cs.fontSize);
-      for (var i = 0; i < 8; i++) {
-        var text = mark.scrollWidth - pad;
-        if (text <= avail) break;
-        size = size * (avail / text) * 0.995;
-        mark.style.fontSize = size + "px";
-      }
+  /* --- ticker: seamless loop on any screen width ------------------------
+     Two identical sets slide by exactly one set width. Each set is filled
+     with copies of the phrases until it is wider than the screen, so the
+     end of one set never shows before the next begins. */
+  var track = document.querySelector(".ticker__track");
+  if (track) {
+    var sets = track.querySelectorAll(".ticker__set");
+    var phrases = Array.prototype.slice.call(sets[0].children).map(function (n) { return n.cloneNode(true); });
+    var fillTicker = function () {
+      var first = sets[0];
+      first.innerHTML = "";
+      do {
+        phrases.forEach(function (n) { first.appendChild(n.cloneNode(true)); });
+      } while (first.scrollWidth < window.innerWidth + 50 && first.children.length < 200);
+      for (var i = 1; i < sets.length; i++) sets[i].innerHTML = first.innerHTML;
+      track.style.animationDuration = Math.max(first.scrollWidth / 45, 8) + "s"; // ~45px per second
     };
-    fitMark();
-    window.addEventListener("load", fitMark);
-    window.addEventListener("resize", fitMark);
-    if (document.fonts) {
-      document.fonts.ready.then(fitMark);
-      try { document.fonts.load("500 16px Unbounded").then(fitMark, function () {}); } catch (e) {}
-    }
+    fillTicker();
+    var tickerW = window.innerWidth;
+    window.addEventListener("resize", function () {
+      if (window.innerWidth > tickerW) fillTicker(); // only ever needs more copies
+      tickerW = Math.max(tickerW, window.innerWidth);
+    });
+    if (document.fonts) document.fonts.ready.then(fillTicker);
+  }
+
+  /* --- home: header turns solid once the page is scrolled -------------- */
+  var top = document.querySelector(".is-home .top");
+  if (top) {
+    var onScroll = function () { top.classList.toggle("is-solid", window.scrollY > 8); };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
   }
 
   /* --- product page: price + CTA bar while the form is out of sight ----- */
   var bar = document.querySelector(".buybar");
-  var order = document.getElementById("order");
+  var order = document.getElementById("buy");
   if (bar && order && "IntersectionObserver" in window) {
     new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {

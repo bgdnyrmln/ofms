@@ -1,13 +1,9 @@
-from django.db import models, transaction
-from django.shortcuts import redirect
+from django.db import models
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel, InlinePanel
 from wagtail.fields import RichTextField
 from wagtail.models import Orderable, Page
 from wagtail.snippets.models import register_snippet
-
-from orders.forms import OrderForm
-from orders.notifications import notify_new_order
 
 
 @register_snippet
@@ -87,21 +83,9 @@ class ProductPage(Page):
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
-        context["form"] = getattr(request, "_order_form", None) or OrderForm(sizes=self.size_list)
-        context["ordered"] = request.GET.get("ordered") == "1"
+        context["added"] = request.GET.get("added") == "1"
+        context["need_size"] = request.GET.get("need_size") == "1"
         return context
-
-    def serve(self, request, *args, **kwargs):
-        if request.method == "POST" and self.is_available:
-            form = OrderForm(request.POST, sizes=self.size_list)
-            if form.is_valid():
-                order = form.save(commit=False)
-                order.product, order.product_title, order.price = self, self.title, self.price
-                order.save()
-                transaction.on_commit(lambda: notify_new_order(order))
-                return redirect(self.url + "?ordered=1#order")
-            request._order_form = form
-        return super().serve(request, *args, **kwargs)
 
 
 class ProductImage(Orderable):

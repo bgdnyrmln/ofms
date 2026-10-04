@@ -14,50 +14,59 @@
       {% endfor %}
     </div>
     {% if page.images.all|length > 1 %}
-      <p class="product__count" data-count aria-hidden="true"><span>1</span>&nbsp;/&nbsp;{{ page.images.all|length }}</p>
+      <p class="product__count lbl" data-count aria-hidden="true"><span>1</span>&nbsp;/&nbsp;{{ page.images.all|length }}</p>
     {% endif %}
   </div>
 
   <div class="product__info">
+    <p class="lbl product__crumbs"><a href="{{ page.get_parent.url }}">{{ page.get_parent.title }}</a>{% if page.category %} / {{ page.category.name }}{% endif %}</p>
     <h1>{{ page.title }}</h1>
     <p class="product__price">{{ page.price|rub }}</p>
     {% if page.short_description %}<p class="product__short">{{ page.short_description }}</p>{% endif %}
-    {% if page.description %}<div class="prose">{{ page.description|richtext }}</div>{% endif %}
-    {% if page.details %}
-      <details class="fold"><summary>Материалы и уход</summary><div class="prose">{{ page.details|richtext }}</div></details>
-    {% endif %}
 
-    <section id="order" class="order" aria-labelledby="order-h">
-      {% if ordered %}
-        <h2 id="order-h">Заявка отправлена</h2>
-        <p>Мы напишем вам в течение суток, чтобы уточнить детали и оплату.</p>
-      {% elif page.is_available %}
-        <h2 id="order-h">Заказать</h2>
-        <form method="post" action="#order" novalidate>
+    <section id="buy" class="buy" aria-label="Покупка">
+      {% if page.is_available %}
+        <form method="post" action="{% url 'cart_add' %}">
           {% csrf_token %}
-          {% for field in form.visible_fields %}
-            <div class="field{% if field.name == 'website' %} field--hp{% endif %}">
-              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
-              {% for e in field.errors %}<p class="field__err">{{ e }}</p>{% endfor %}
+          <input type="hidden" name="product" value="{{ page.pk }}">
+          {% if page.size_list %}
+          <fieldset class="sizes">
+            <legend class="lbl">Размер</legend>
+            <div class="sizes__row">
+              {% for s in page.size_list %}
+                <label class="size"><input type="radio" name="size" value="{{ s }}" required><span>{{ s }}</span></label>
+              {% endfor %}
             </div>
-          {% endfor %}
-          <button type="submit">Отправить заявку</button>
+            {% if need_size %}<p class="field__err">Выберите размер</p>{% endif %}
+          </fieldset>
+          {% endif %}
+          <button class="btn" type="submit">Добавить в корзину</button>
         </form>
+        {% if added %}
+          <p class="notice" role="status">Добавлено в корзину · <a href="{% url 'cart' %}">Перейти в корзину →</a></p>
+        {% endif %}
       {% else %}
-        <h2 id="order-h">Нет в наличии</h2>
-        <p>Этой модели сейчас нельзя заказать.</p>
+        <p class="btn btn--off" aria-disabled="true">Нет в наличии</p>
       {% endif %}
     </section>
+
+    {% if page.description %}<div class="prose product__desc">{{ page.description|richtext }}</div>{% endif %}
+    {% if page.details %}
+      <details class="fold"><summary class="lbl">Материалы и уход</summary><div class="prose">{{ page.details|richtext }}</div></details>
+    {% endif %}
+    {% page_by_slug "rules" as rules %}
+    {% if rules %}
+      <details class="fold"><summary class="lbl">Доставка и возврат</summary><div class="prose"><p>Оплата и доставка согласуются с менеджером после заявки. Подробности — в <a href="{% pageurl rules %}">правилах магазина</a>.</p></div></details>
+    {% endif %}
   </div>
 </article>
 {% endblock %}
 
 {% block after_content %}
-{% if page.is_available and not ordered %}
+{% if page.is_available %}
 <div class="buybar">
   <span class="buybar__price">{{ page.price|rub }}</span>
-  <a class="buybar__btn" href="#order">Заказать</a>
+  <a class="btn buybar__btn" href="#buy">В корзину</a>
 </div>
 {% endif %}
 {% endblock %}

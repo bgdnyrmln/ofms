@@ -1,0 +1,1 @@
+{% load wagtailcore_tags wagtailimages_tags %}{% if block.block_type == "image" %}{% image block.value width-1200 class="text-page__img" %}{% elif block.block_type == "text" %}<div class="prose">{{ block.value|richtext }}</div>{% endif %}

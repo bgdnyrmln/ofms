@@ -39,10 +39,26 @@ class ContentPage(Page):
         blank=True,
     )
 
-    content_panels = Page.content_panels + [FieldPanel("body")]
+    accordion = models.BooleanField(
+        "Разделы гармошкой", default=False,
+        help_text="Каждый заголовок становится раскрывающимся разделом (например, для правил).",
+    )
+
+    content_panels = Page.content_panels + [FieldPanel("body"), FieldPanel("accordion")]
     parent_page_types = ["home.HomePage"]
     subpage_types = []
     verbose_name = "Текстовая страница"
 
     class Meta:
         verbose_name = "Текстовая страница"
+
+    def sections(self):
+        """Body split at each heading: [(heading or None, [blocks])]."""
+        result = []
+        for block in self.body:
+            if block.block_type == "heading" or not result:
+                result.append((block.value if block.block_type == "heading" else None, []))
+                if block.block_type == "heading":
+                    continue
+            result[-1][1].append(block)
+        return result

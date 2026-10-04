@@ -4,25 +4,61 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#e4e4e1">
+  <meta name="theme-color" content="#090a09">
+  <meta name="color-scheme" content="dark">
+  {# loading screen styles live here, not in site.css, so it is black from the very first frame #}
+  <link rel="preload" as="image" href="{% asset 'img/loader.jpg' %}">
+  <style>
+    .loader { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #000; transition: opacity .45s ease; }
+    .loader.is-hidden { opacity: 0; pointer-events: none; }
+    .loader img { width: min(46vw, 260px); height: auto; animation: loader-pulse 1.6s ease-in-out infinite; }
+    @keyframes loader-pulse { 50% { opacity: .55; } }
+    @media (prefers-reduced-motion: reduce) { .loader img { animation: none; } }
+  </style>
+  <noscript><style>.loader { display: none; }</style></noscript>
   <title>{% block title %}{% firstof page.seo_title page.title %}{% endblock %} — {{ settings.core.SiteSettings.brand_name }}</title>
   {% if page.search_description %}<meta name="description" content="{{ page.search_description }}">{% endif %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500&family=Unbounded:wght@400;500&display=swap&subset=cyrillic">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@500&display=swap&subset=cyrillic">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% asset 'img/favicon-32.png' %}">
+  <link rel="icon" type="image/png" sizes="192x192" href="{% asset 'img/icon-192.png' %}">
+  <link rel="apple-touch-icon" href="{% asset 'img/apple-touch-icon.png' %}">
   <link rel="stylesheet" href="{% asset 'css/site.css' %}">
   {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
+  <div class="loader" id="loader" aria-hidden="true"><img src="{% asset 'img/loader.jpg' %}" alt="" width="560" height="560"></div>
+  <script>
+    /* Loading screen: on every page load, until the page and its images are in
+       (at least 0.5s so it doesn't flash, at most 3s), then removed for good. */
+    (function () {
+      var loader = document.getElementById("loader"), start = Date.now(), done = false;
+      function hide() {
+        if (done) return;
+        done = true;
+        setTimeout(function () {
+          loader.classList.add("is-hidden");
+          setTimeout(function () { loader.remove(); }, 500);
+        }, Math.max(0, 500 - (Date.now() - start)));
+      }
+      if (document.readyState === "complete") hide();
+      else window.addEventListener("load", hide);
+      setTimeout(hide, 3000);
+    })();
+  </script>
   <a class="skip" href="#main">К содержимому</a>
   {% main_menu as menu_items %}
+  {% url "cart" as cart_url %}
   <header class="top">
     <a class="top__brand" href="/">{{ settings.core.SiteSettings.brand_name }}</a>
     <nav class="top__nav" aria-label="Основное меню">
+      <a href="/"{% if request.path == "/" %} aria-current="page"{% endif %}>Главная</a>
       {% for item in menu_items %}
         <a href="{% pageurl item %}"{% if item.url in request.path %} aria-current="page"{% endif %}>{{ item.title }}</a>
       {% endfor %}
     </nav>
+    <a class="top__cart" href="{{ cart_url }}"{% if request.path == cart_url %} aria-current="page"{% endif %}>Корзина <span data-cart-count>({{ cart_count|default:0 }})</span></a>
     <button class="top__burger" type="button" aria-expanded="false" aria-controls="menu">Меню</button>
   </header>
 
@@ -36,32 +72,39 @@
       {% for item in menu_items %}
         <a href="{% pageurl item %}"{% if item.url in request.path %} aria-current="page"{% endif %}>{{ item.title }}</a>
       {% endfor %}
+      <a href="{{ cart_url }}"{% if request.path == cart_url %} aria-current="page"{% endif %}>Корзина ({{ cart_count|default:0 }})</a>
     </nav>
-    {% with s=settings.core.SiteSettings %}
-      {% if s.telegram or s.instagram or s.email %}
-      <div class="drawer__meta">
-        {% if s.telegram %}<a href="https://t.me/{{ s.telegram }}">Telegram</a>{% endif %}
-        {% if s.instagram %}<a href="https://instagram.com/{{ s.instagram }}">Instagram</a>{% endif %}
-        {% if s.email %}<a href="mailto:{{ s.email }}">{{ s.email }}</a>{% endif %}
-      </div>
-      {% endif %}
-    {% endwith %}
+    <img class="drawer__logo" src="{% asset 'img/logo-tight.jpg' %}" alt="" width="630" height="700" loading="lazy">
   </div>
 
   <main id="main">{% block content %}{% endblock %}</main>
-  <footer class="foot">
+
   {% with s=settings.core.SiteSettings %}
-    <p class="foot__note">{% if s.footer_note %}{{ s.footer_note }}{% else %}© {% now "Y" %} {{ s.brand_name }}{% endif %}</p>
-    {% if s.telegram or s.instagram or s.email %}
-    <p class="foot__links">
-      {% if s.telegram %}<a href="https://t.me/{{ s.telegram }}">Telegram</a>{% endif %}
-      {% if s.instagram %}<a href="https://instagram.com/{{ s.instagram }}">Instagram</a>{% endif %}
-      {% if s.email %}<a href="mailto:{{ s.email }}">{{ s.email }}</a>{% endif %}
-    </p>
-    {% endif %}
-  {% endwith %}
-    <p class="foot__credit">Developed by <a href="https://bgdnyrmln.com" target="_blank" rel="noopener">Bogdan Yarmolinsqy</a></p>
+  {% catalog_page as catalog %}
+  {% shop_categories as cats %}
+  <footer class="foot">
+    <div class="foot__grid">
+      <a class="foot__mark" href="/"><img src="{% asset 'img/logo-tight.jpg' %}" alt="{{ s.brand_name }}" width="630" height="700" loading="lazy"></a>
+      {% if catalog %}
+      <nav class="foot__col" aria-label="Каталог">
+        <p class="lbl foot__h">Каталог</p>
+        <a href="{% pageurl catalog %}">Все</a>
+        {% for c in cats %}<a href="{% pageurl catalog %}?category={{ c.slug }}">{{ c.name }}</a>{% endfor %}
+      </nav>
+      {% endif %}
+      <nav class="foot__col" aria-label="Информация">
+        <p class="lbl foot__h">Информация</p>
+        <a href="/">Главная</a>
+        {% for item in menu_items %}{% if item.pk != catalog.pk %}<a href="{% pageurl item %}">{{ item.title }}</a>{% endif %}{% endfor %}
+        <a href="{{ cart_url }}">Корзина</a>
+      </nav>
+    </div>
+    <div class="foot__bar">
+      <p>{% if s.footer_note %}{{ s.footer_note }}{% else %}© {% now "Y" %} {{ s.brand_name }}{% endif %}</p>
+      <p class="foot__credit">Developed by <a href="https://bgdnyrmln.com" target="_blank" rel="noopener">Bogdan Yarmolinsqy</a></p>
+    </div>
   </footer>
+  {% endwith %}
   {% block after_content %}{% endblock %}
   <script src="{% asset 'js/site.js' %}" defer></script>
   {% wagtailuserbar %}

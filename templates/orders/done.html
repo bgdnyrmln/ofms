@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags nav_tags %}
+{% block title %}Заявка принята{% endblock %}
+{% block content %}
+<div class="wrap wrap--text">
+<section class="page-head">
+  <p class="lbl page-head__eyebrow">Заявка #{{ order.pk }}</p>
+  <h1>Заявка принята</h1>
+  <p class="page-head__intro">Мы напишем вам в течение 24 часов на {{ order.contact }}, чтобы подтвердить заказ, оплату и доставку.</p>
+</section>
+<div class="done">
+  <ul class="done__items">
+    {% for item in order.items.all %}
+      <li><span>{{ item.title }}{% if item.size %} · {{ item.size }}{% endif %}{% if item.quantity > 1 %} × {{ item.quantity }}{% endif %}</span><span>{{ item.line_total|rub }}</span></li>
+    {% endfor %}
+    <li class="done__total"><span class="lbl">Итого</span><span>{{ order.price|rub }}</span></li>
+  </ul>
+  {% catalog_page as catalog %}
+  {% if catalog %}<a class="btn btn--ghost" href="{% pageurl catalog %}">Вернуться в каталог <span class="btn__line" aria-hidden="true"></span></a>{% endif %}
+</div>
+</div>
+{% endblock %}

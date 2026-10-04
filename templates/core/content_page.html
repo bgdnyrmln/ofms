@@ -3,10 +3,24 @@
 {% block content %}
 <article class="text-page">
   <h1>{{ page.title }}</h1>
-  {% for block in page.body %}
-    {% if block.block_type == "heading" %}<h2>{{ block.value }}</h2>
-    {% elif block.block_type == "image" %}{% image block.value width-1200 class="text-page__img" %}
-    {% else %}<div class="prose">{{ block.value|richtext }}</div>{% endif %}
-  {% endfor %}
+  {% if page.accordion %}
+    {% for heading, blocks in page.sections %}
+      {% if heading %}
+      <details class="acc">
+        <summary><h2 class="lbl">{{ heading }}</h2></summary>
+        <div class="acc__body">
+          {% for block in blocks %}{% include "core/block.html" %}{% endfor %}
+        </div>
+      </details>
+      {% else %}
+        {% for block in blocks %}{% include "core/block.html" %}{% endfor %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {% for block in page.body %}
+      {% if block.block_type == "heading" %}<h2 class="lbl">{{ block.value }}</h2>
+      {% else %}{% include "core/block.html" %}{% endif %}
+    {% endfor %}
+  {% endif %}
 </article>
 {% endblock %}
