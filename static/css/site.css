@@ -98,7 +98,8 @@ button[type=submit]:active { opacity: .85; }
 .text-page__img { margin: 2rem 0; }
 
 .foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding: var(--pad); border-top: 1px solid var(--rule); font-size: .9rem; }
-.foot p { margin: 0; } .foot__links { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+.foot p { margin: 0; }
+.foot__credit { color: var(--mute); } .foot__credit a { color: var(--ink); } .foot__links { display: flex; gap: 1.25rem; flex-wrap: wrap; }
 
 /* ---------------------------------------------------------------- mobile UI
    Pieces below are hidden on desktop and switched on in the phone query. */

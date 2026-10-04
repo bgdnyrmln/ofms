@@ -2,6 +2,8 @@
 (function () {
   "use strict";
 
+  console.log("bgdnyrmln.com");
+
   /* --- menu drawer ------------------------------------------------------ */
   var burger = document.querySelector(".top__burger");
   var drawer = document.getElementById("menu");
